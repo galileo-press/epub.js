@@ -64,10 +64,10 @@ EPUBJS.EpubCFI.prototype.pathTo = function(node) {
 			'tagName' : node.tagName,
 			'index' : children ? Array.prototype.indexOf.call(children, node) : 0
 		});
-		
+
 		node = node.parentNode;
 	}
-	
+
 	return stack;
 };
 
@@ -106,21 +106,21 @@ EPUBJS.EpubCFI.prototype.parse = function(cfiStr) {
 		text,
 		parseStep = function(part){
 			var type, index, has_brackets, id;
-			
+
 			type = "element";
 			index = parseInt(part) / 2 - 1;
 			has_brackets = part.match(/\[(.*)\]/);
 			if(has_brackets && has_brackets[1]){
 				id = has_brackets[1];
 			}
-			
+
 			return {
 				"type" : type,
 				'index' : index,
 				'id' : id || false
 			};
 		};
-	
+
 	if(typeof cfiStr !== "string") {
 		return {spinePos: -1};
 	}
@@ -139,7 +139,7 @@ EPUBJS.EpubCFI.prototype.parse = function(cfiStr) {
 	if(!chapterComponent) {
 		return {spinePos: -1};
 	}
-	
+
 	// Chapter segment is always the second one
 	chapSegment = chapterComponent.split("/")[2] || '';
 	if(!chapSegment) return {spinePos:-1};
@@ -162,7 +162,7 @@ EPUBJS.EpubCFI.prototype.parse = function(cfiStr) {
 
 	path.forEach(function(part){
 		var step;
-		
+
 		if(part) {
 			step = parseStep(part);
 			cfi.steps.push(step);
@@ -172,7 +172,7 @@ EPUBJS.EpubCFI.prototype.parse = function(cfiStr) {
 	//-- Check if END is a text node or element
 	endInt = parseInt(end);
 	if(!isNaN(endInt)) {
-		
+
 		if(endInt % 2 === 0) { // Even = is an element
 			cfi.steps.push(parseStep(end));
 		} else {
@@ -192,7 +192,7 @@ EPUBJS.EpubCFI.prototype.parse = function(cfiStr) {
 	} else {
 		cfi.characterOffset = parseInt(charecterOffsetComponent);
 	}
-	
+
 	return cfi;
 };
 
@@ -203,7 +203,7 @@ EPUBJS.EpubCFI.prototype.addMarker = function(cfi, _doc, _marker) {
 	var lastStep;
 	var text;
 	var split;
-	
+
 	if(typeof cfi === 'string') {
 		cfi = this.parse(cfi);
 	}
@@ -218,13 +218,13 @@ EPUBJS.EpubCFI.prototype.addMarker = function(cfi, _doc, _marker) {
 
 	// Find the CFI elements parent
 	parent = this.findParent(cfi, doc);
-	
+
 	if(!parent) {
 		// CFI didn't return an element
 		// Maybe it isnt in the current chapter?
 		return false;
 	}
-	
+
 	if(lastStep && lastStep.type === "text") {
 		text = parent.childNodes[lastStep.index];
 		if(cfi.characterOffset){
@@ -237,7 +237,7 @@ EPUBJS.EpubCFI.prototype.addMarker = function(cfi, _doc, _marker) {
 	} else {
 		parent.insertBefore(marker, parent.firstChild);
 	}
-	
+
 	return marker;
 };
 
@@ -246,7 +246,7 @@ EPUBJS.EpubCFI.prototype.createMarker = function(_doc) {
 	var element = doc.createElement('span');
 	element.id = "EPUBJS-CFI-MARKER:"+ EPUBJS.core.uuid();
 	element.classList.add("EPUBJS-CFI-MARKER");
-	
+
 	return element;
 };
 
@@ -284,7 +284,7 @@ EPUBJS.EpubCFI.prototype.findParent = function(cfi, _doc) {
 	if(typeof cfi === 'string') {
 		cfi = this.parse(cfi);
 	}
-	
+
 	sections = cfi.steps.slice(0); // Clone steps array
 	if(!sections.length) {
 		return doc.getElementsByTagName('body')[0];
@@ -329,8 +329,8 @@ EPUBJS.EpubCFI.prototype.compare = function(cfiOne, cfiTwo) {
 	if(cfiOne.spinePos < cfiTwo.spinePos) {
 		return -1;
 	}
-	
-	
+
+
 	// Compare Each Step in the First item
 	for (var i = 0; i < cfiOne.steps.length; i++) {
 		if(!cfiTwo.steps[i]) {
@@ -344,7 +344,7 @@ EPUBJS.EpubCFI.prototype.compare = function(cfiOne, cfiTwo) {
 		}
 		// Otherwise continue checking
 	}
-	
+
 	// All steps in First present in Second
 	if(cfiOne.steps.length < cfiTwo.steps.length) {
 		return -1;
@@ -371,7 +371,7 @@ EPUBJS.EpubCFI.prototype.generateCfiFromHref = function(href, book) {
 	var deferred = new RSVP.defer();
 	var epubcfi = new EPUBJS.EpubCFI();
 	var spineItem;
-	
+
 	if(typeof spinePos !== "undefined"){
 		spineItem = book.spine[spinePos];
 		loaded = book.loadXml(spineItem.url);
@@ -382,7 +382,7 @@ EPUBJS.EpubCFI.prototype.generateCfiFromHref = function(href, book) {
 			deferred.resolve(cfi);
 		});
 	}
-	
+
 	return deferred.promise;
 };
 
@@ -405,7 +405,7 @@ EPUBJS.EpubCFI.prototype.generateCfiFromRange = function(range, base) {
 	var end, endElement, endSteps, endPath, endOffset, endIndex;
 
 	start = range.startContainer;
-	
+
 	if(start.nodeType === 3) { // text node
 		startElement = start.parentNode;
 		//startIndex = 1 + (2 * Array.prototype.indexOf.call(startElement.childNodes, start));
@@ -416,18 +416,18 @@ EPUBJS.EpubCFI.prototype.generateCfiFromRange = function(range, base) {
 	} else {
 		startSteps = this.pathTo(start);
 	}
-	
+
 	startPath = this.generatePathComponent(startSteps);
 	startOffset = range.startOffset;
-	
+
 	if(!range.collapsed) {
 		end = range.endContainer;
-		
+
 		if(end.nodeType === 3) { // text node
 			endElement = end.parentNode;
-			// endIndex = 1 + (2 * Array.prototype.indexOf.call(endElement.childNodes, end));			
+			// endIndex = 1 + (2 * Array.prototype.indexOf.call(endElement.childNodes, end));
 			endIndex = 1 + (2 * EPUBJS.core.indexOfTextNode(end));
-			
+
 			endSteps = this.pathTo(endElement);
 		} else {
 			endSteps = this.pathTo(end);
@@ -437,7 +437,7 @@ EPUBJS.EpubCFI.prototype.generateCfiFromRange = function(range, base) {
 		endOffset = range.endOffset;
 
 		return "epubcfi(" + base + "!" + startPath + "/" + startIndex + ":" + startOffset + "," + endPath + "/" + endIndex + ":" + endOffset + ")";
-		
+
 	} else {
 		return "epubcfi(" + base + "!" + startPath + "/"+ startIndex +":"+ startOffset +")";
 	}
@@ -448,7 +448,7 @@ EPUBJS.EpubCFI.prototype.generateXpathFromSteps = function(steps) {
 
 	steps.forEach(function(step){
 		var position = step.index + 1;
-		
+
 		if(step.id){
 			xpath.push("*[position()=" + position + " and @id='" + step.id + "']");
 		} else if(step.type === "text") {
@@ -463,25 +463,25 @@ EPUBJS.EpubCFI.prototype.generateXpathFromSteps = function(steps) {
 
 
 EPUBJS.EpubCFI.prototype.generateRangeFromCfi = function(cfi, _doc) {
-	var doc = _doc || document;
+	var doc = document;
 	var range = doc.createRange();
 	var lastStep;
 	var xpath;
 	var startContainer;
 	var textLength;
-	
+
 	if(typeof cfi === 'string') {
 		cfi = this.parse(cfi);
 	}
-	
+
 	// check spinePos
 	if(cfi.spinePos === -1) {
 		// Not a valid CFI
 		return false;
 	}
-		
+
 	xpath = this.generateXpathFromSteps(cfi.steps);
-	
+
 	// Get the terminal step
 	lastStep = cfi.steps[cfi.steps.length-1];
 	startContainer = doc.evaluate(xpath, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -499,7 +499,7 @@ EPUBJS.EpubCFI.prototype.generateRangeFromCfi = function(cfi, _doc) {
 		} else {
 			console.debug("offset greater than length:", cfi.characterOffset, textLength);
 			range.setStart(startContainer, textLength - 1 );
-			range.setEnd(startContainer, textLength );	
+			range.setEnd(startContainer, textLength );
 		}
 	} else if(startContainer) {
 		range.selectNode(startContainer);
